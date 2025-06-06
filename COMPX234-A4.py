@@ -1,0 +1,6 @@
+print("This is my assignment of COMPX234-A4")
+print("Student Name: Zhu Feiyu")
+print("Student ID: 20233006387")
+print("Thanks for your guidance, professor!")
+print("Thanks for your guidance, professor!")
+print("Thanks for your guidance, professor!")
