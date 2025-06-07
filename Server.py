@@ -1,4 +1,9 @@
-
+import socket
+import threading
+import os
+from base64 import b64encode
+import sys
+import random
 
 # Class to handle file transfer as a thread
 class FileTransferHandler(threading.Thread):
@@ -90,3 +95,31 @@ class FileTransferHandler(threading.Thread):
                 print(f"Unexpected error: {e}")
                 break
         print(f"Data transfer for {self.target_file} completed.")
+        
+    # this is a execution method 
+    def run(self):
+        self.setup_connection()
+
+        if not self.process_file_request():
+            self.data_socket.close()
+            print(f"Transfer for {self.target_file} aborted. Socket closed on {self.comm_port}.")
+            return
+
+        try:
+            with open(self.full_path, 'rb') as file_handle:
+                file_size = os.path.getsize(self.full_path)
+                self.handle_data_transfer(file_handle, file_size)
+        except Exception as e:
+            print(f"File handling error: {e}")
+        finally:
+            self.data_socket.close()
+            print(f"Transfer for {self.target_file} on {self.comm_port} complete. Socket closed.")
+
+class NetworkFileServer:
+    def __init__(self, listen_port):
+        print(f"Initializing server on port {listen_port}...")
+        self.listener = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # Bind listener to the given port
+        self.listener.bind(('', listen_port))
+        print(f"File sharing active on port {listen_port}.")
+    
