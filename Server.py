@@ -122,4 +122,45 @@ class NetworkFileServer:
         # Bind listener to the given port
         self.listener.bind(('', listen_port))
         print(f"File sharing active on port {listen_port}.")
-    
+        
+    def process_download_request(self, message, client_address):
+        try:
+            file_requested = message.split(maxsplit=1)[1].strip()
+            file_location = os.path.join("server_files", file_requested)
+
+            if os.path.exists(file_location):
+                transfer_port = random.randint(50000, 51000)
+                file_size = os.path.getsize(file_location)
+                reply = f"OK {file_requested} SIZE {file_size} PORT {transfer_port}"
+                self.listener.sendto(reply.encode(), client_address)
+                print(f"{file_requested} found. Sent OK with size {file_size} and port {transfer_port} to {client_address}.")
+
+                transfer_handler = FileTransferHandler(
+                    file_requested,
+                    client_address,
+                    transfer_port
+                )
+                transfer_handler.start()
+                print(f"Started thread for {file_requested} on port {transfer_port}.")
+            else:
+                reply = f"ERR {file_requested} NOT_FOUND"
+                self.listener.sendto(reply.encode(), client_address)
+                print(f"{file_requested} not found. Sent error to {client_address}.")
+
+        except IndexError:
+            print(f"Invalid request from {client_address}. Ignoring...")
+
+    def service_loop(self):
+        print("Waiting for requests...")
+        while True:
+            try:
+                data_packet, client = self.listener.recvfrom(1024)
+                message_content = data_packet.decode().strip()
+
+                if message_content.startswith("DOWNLOAD"):
+                    self.process_download_request(message_content, client)
+                else:
+                    continue
+
+            except Exception as e:
+                print(f"Service error: {e}")
