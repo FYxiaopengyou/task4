@@ -164,3 +164,22 @@ class NetworkFileServer:
 
             except Exception as e:
                 print(f"Service error: {e}")
+
+def initialize_server():
+    if len(sys.argv) != 2:
+        print("Usage: python UDPserver.py <port_number>")
+        sys.exit(1)
+
+    if not os.path.exists("server_files"):
+        os.makedirs("server_files")
+        print("'server_files' directory created.")
+
+    server_port = int(sys.argv[1])
+    file_server = NetworkFileServer(server_port)
+    file_server.service_loop()
+
+if __name__ == "__main__":
+    initialize_server()
+    print("student Name: ZhuFeiyu")
+    print("ID 20233006387")
+    print("Thanks for your guidance, professor!")
