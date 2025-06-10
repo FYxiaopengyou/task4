@@ -45,4 +45,47 @@ class FileTransferClient:
 
             raise ConnectionError("Max retries reached")
         
+    def execute_transfers(self):
+
+        print("\nStarting file transfer process...")
+
+        for target_file in self.file_queue:
+
+            print(f"\n\nRequesting file: {target_file}")
+            try:
+
+                response = self._communicate(
+                    self.udp_socket,
+                    f"DOWNLOAD {target_file}",
+                    self.server,
+                    self.socket_timeout
+                )
+
+                if response.startswith("OK"):
+
+                    print("\nServer responded with OK. Parsing file size and data port...")
+
+                    parts = response.split()
+                    try:
+                        file_size = int(parts[parts.index("SIZE")+1])
+                        data_port = int(parts[parts.index("PORT")+1])
+
+                        print(f"\nFile size: {file_size} bytes, Data port: {data_port}")
+
+                        # Download the file
+                        self._download_file(target_file, file_size, data_port)
+                    except (ValueError, IndexError):
+                        print("\n  Invalid server response format. Skipping this file...")
+                        continue
+
+                elif response.startswith("ERR"):
+                    print(f"\n  Server error: {response[4:]}")
+                else:
+                    print(f"\n  Unexpected response: {response}")
+
+            except Exception as e:
+                print(f"\n  Transfer failed: {str(e)}")
+
+        #show transfer complete
+        print("\nFile transfer process completed.")
         
