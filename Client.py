@@ -88,4 +88,57 @@ class FileTransferClient:
 
         #show transfer complete
         print("\nFile transfer process completed.")
-        
+
+    def _download_file(self, filename, file_size, data_port):
+        data_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        data_socket.settimeout(self.socket_timeout)
+        endpoint = (self.server[0], data_port)
+        print(f"\n[{filename}] Connecting to data port {data_port} for downloading {file_size} bytes...")
+
+        try:
+            print(f"\n[{filename}] Downloading {file_size} bytes", end='', flush=True)
+            received = 0
+            with open(filename, 'wb') as f:
+                while received < file_size:
+                    start = received
+                    end = min(start + self.chunk_size - 1, file_size - 1)
+                    
+                    print(f"\n\n[{filename}] Requesting bytes from {start} to {end}...")
+
+                    response = self._communicate(
+                        data_socket,
+                        f"FILE {filename} GET START {start} END {end}",
+                        endpoint,
+                        self.socket_timeout
+                    )
+                    if not response.startswith(f"FILE {filename}"):
+                        raise RuntimeError("Invalid response format")
+
+                    if "OK" in response:
+                        try:
+                            data_start = response.find("DATA") + 5
+                            chunk = b64decode(response[data_start:].encode())
+                            f.write(chunk)
+                            received += len(chunk)
+                            print("#", end='', flush=True)
+                        except Exception as e:
+                            raise RuntimeError(f"Data decoding error: {str(e)}")
+                    else:
+                        raise RuntimeError(f"Server error: {response}")
+
+                print("\n\nRequesting to close the file transfer...")
+                close_response = self._communicate(
+                    data_socket,
+                    f"FILE {filename} CLOSE",
+                    endpoint,
+                    self.socket_timeout
+                )
+                if "CLOSE_OK" in close_response:
+                    print("\n  Transfer completed successfully")
+                else:
+                    print("\n  Warning: Close confirmation missing")
+            self._verify_file(filename)
+
+        finally:
+            data_socket.close()
+            
