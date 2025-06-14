@@ -12,13 +12,14 @@ class FileTransferHandler(threading.Thread):
         self.target_file = file_name
         # Client information
         self.client_info = client_info
-
+        
         #define port; block size; and path
         self.comm_port = transfer_port
         self.data_socket = None
         self.block_size = 1000
         self.full_path = os.path.join("server_files", file_name)
         print(f"Initializing file transfer handler for {self.target_file} on port {self.comm_port}...")
+
 
     # Set up UDP socket for data transfer
     def setup_connection(self):
@@ -36,7 +37,7 @@ class FileTransferHandler(threading.Thread):
             return False
         print(f"{self.target_file} found. Starting transfer.")
         return True
-    
+
     # Handle data transfer to client
     def handle_data_transfer(self, file_obj, file_length):
         while True:
@@ -95,8 +96,8 @@ class FileTransferHandler(threading.Thread):
                 print(f"Unexpected error: {e}")
                 break
         print(f"Data transfer for {self.target_file} completed.")
-        
-    # this is a execution method 
+
+    # this is a main execution method 
     def run(self):
         self.setup_connection()
 
@@ -115,6 +116,7 @@ class FileTransferHandler(threading.Thread):
             self.data_socket.close()
             print(f"Transfer for {self.target_file} on {self.comm_port} complete. Socket closed.")
 
+# this is to manage network file server
 class NetworkFileServer:
     def __init__(self, listen_port):
         print(f"Initializing server on port {listen_port}...")
@@ -122,7 +124,8 @@ class NetworkFileServer:
         # Bind listener to the given port
         self.listener.bind(('', listen_port))
         print(f"File sharing active on port {listen_port}.")
-        
+
+    # Process client's download request
     def process_download_request(self, message, client_address):
         try:
             file_requested = message.split(maxsplit=1)[1].strip()
@@ -150,6 +153,7 @@ class NetworkFileServer:
         except IndexError:
             print(f"Invalid request from {client_address}. Ignoring...")
 
+    # main service loop 
     def service_loop(self):
         print("Waiting for requests...")
         while True:
@@ -165,6 +169,7 @@ class NetworkFileServer:
             except Exception as e:
                 print(f"Service error: {e}")
 
+# Initialize the network file server
 def initialize_server():
     if len(sys.argv) != 2:
         print("Usage: python UDPserver.py <port_number>")
@@ -178,8 +183,11 @@ def initialize_server():
     file_server = NetworkFileServer(server_port)
     file_server.service_loop()
 
+#main method 
 if __name__ == "__main__":
     initialize_server()
     print("student Name: ZhuFeiyu")
     print("ID 20233006387")
+    print("Thanks for your guidance, professor!")
+    print("Thanks for your guidance, professor!")
     print("Thanks for your guidance, professor!")
